@@ -214,6 +214,8 @@ describe('block layout', () => {
     const driver = laid.nodes.find(n => n.id === '20');
     const target = laid.nodes.find(n => n.id === '40');
     const drive = laid.edges.find(e => e.from === '20' && e.to === '40');
+    const error = laid.nodes.find(n => n.id === '12');
+    const measured = laid.edges.find(e => e.from === '30' && e.to === '12');
 
     expect(feedback).toBeDefined();
     expect(sensor).toBeDefined();
@@ -221,10 +223,14 @@ describe('block layout', () => {
     expect(driver).toBeDefined();
     expect(target).toBeDefined();
     expect(drive).toBeDefined();
+    expect(error).toBeDefined();
+    expect(measured).toBeDefined();
     expect(sensor!.x).toBeLessThan(controller!.x);
     expect(target!.x).toBeLessThan(driver!.x);
     expect(sensor!.y).toBeLessThan(target!.y);
     expect(controller!.y).toBeLessThan(driver!.y);
+    expect(centerY(sensor!)).toBe(centerY(error!));
+    expect(measured!.points[0][1]).toBe(measured!.points.at(-1)![1]);
     expect(drive!.points[0][1]).toBe(drive!.points.at(-1)![1]);
     expect(feedback!.points).toHaveLength(2);
     expect(feedback!.points[0][0]).toBe(feedback!.points[1][0]);

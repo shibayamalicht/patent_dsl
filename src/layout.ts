@@ -119,9 +119,11 @@ function layoutBlock(doc: Doc): LaidOut {
         const r = Math.floor(i / cols);
         const cc = i % cols;
         const cx = ox + PAD + cc * (colW + GRID_GAP) + (colW - sizes[i].w) / 2;
-        const cy = oy + TITLE_H + PAD + r * (rowH + GRID_GAP);
+        const rowTop = oy + TITLE_H + PAD + r * (rowH + GRID_GAP);
+        const cy = rowTop + (rowH - sizes[i].h) / 2;
         place(children[i], cx, cy);
       }
+      alignGridRows(children, sizes, rowH, oy + TITLE_H + PAD, childMap, doc.edges, positions, placed);
     } else {
       const maxW = Math.max(...sizes.map(s => s.w));
       let yy = oy + TITLE_H + PAD;
@@ -465,6 +467,62 @@ function collectSubtreeIds(id: string, childMap: Map<string, string[]>): Set<str
     for (const descendant of collectSubtreeIds(child, childMap)) ids.add(descendant);
   }
   return ids;
+}
+
+function alignGridRows(
+  children: string[],
+  sizes: { w: number; h: number }[],
+  rowH: number,
+  firstRowTop: number,
+  childMap: Map<string, string[]>,
+  edges: Edge[],
+  positions: Map<string, Box>,
+  placed: LaidOutNode[],
+): void {
+  const cols = 2;
+  const rows = Math.ceil(children.length / cols);
+  for (let row = 0; row < rows; row++) {
+    const rowChildren = children.slice(row * cols, row * cols + cols);
+    const rowTop = firstRowTop + row * (rowH + GRID_GAP);
+    for (const child of rowChildren) {
+      const childIndex = children.indexOf(child);
+      const childSize = sizes[childIndex];
+      if (!childSize || childSize.h >= rowH - EPS) continue;
+      const subtreeIds = collectSubtreeIds(child, childMap);
+      const siblingIds = new Set<string>();
+      for (const sibling of rowChildren) {
+        if (sibling === child) continue;
+        for (const id of collectSubtreeIds(sibling, childMap)) siblingIds.add(id);
+      }
+      const deltas: number[] = [];
+      for (const edge of edges) {
+        const fromChild = subtreeIds.has(edge.from);
+        const toChild = subtreeIds.has(edge.to);
+        if (fromChild && siblingIds.has(edge.to)) {
+          addWeightedDelta(
+            deltas,
+            centerY(positions.get(edge.to)) - centerY(positions.get(edge.from)),
+            alignmentWeight(edge, false),
+          );
+        } else if (toChild && siblingIds.has(edge.from)) {
+          addWeightedDelta(
+            deltas,
+            centerY(positions.get(edge.from)) - centerY(positions.get(edge.to)),
+            alignmentWeight(edge, true),
+          );
+        }
+      }
+      if (deltas.length === 0) continue;
+      deltas.sort((a, b) => a - b);
+      const desired = deltas[Math.floor(deltas.length / 2)];
+      const box = positions.get(child);
+      if (!box) continue;
+      const minDy = rowTop - box.y;
+      const maxDy = rowTop + rowH - childSize.h - box.y;
+      const dy = Math.min(maxDy, Math.max(minDy, desired));
+      if (Math.abs(dy) >= EPS) shiftSubtree(subtreeIds, dy, positions, placed);
+    }
+  }
 }
 
 function rootAlignmentDelta(
