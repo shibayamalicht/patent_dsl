@@ -1,0 +1,27 @@
+{
+  "name": "patentdsl",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Patent diagram DSL single-HTML tool",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && mv dist/index.html ./patent_dsl.html && rm -rf dist",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "svg2pdf.js": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "puppeteer-core": "^25.1.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "vite-plugin-singlefile": "^2.0.2",
+    "vitest": "^1.6.0"
+  }
+}
