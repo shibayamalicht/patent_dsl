@@ -37,6 +37,12 @@
         <button data-lang="both">日/英</button>
       </div>
 
+      <div class="zoom-control" role="group" aria-label="プレビュー倍率">
+        <button id="btn-zoom-out" type="button" title="プレビューを縮小"><span data-icon="zoom-out"></span></button>
+        <button id="btn-zoom-reset" type="button" title="プレビューを画面に合わせる(100%)"><span id="zoom-label">100%</span></button>
+        <button id="btn-zoom-in" type="button" title="プレビューを拡大"><span data-icon="zoom-in"></span></button>
+      </div>
+
       <button id="btn-help" class="icon-btn" title="記法リファレンスを開く"><span data-icon="help"></span><span>記法</span></button>
 
       <div class="spacer"></div>
@@ -45,7 +51,9 @@
       <button id="btn-clear" class="icon-btn danger" title="全消去: ソースを空にする"><span data-icon="trash"></span><span>全消去</span></button>
 
       <div class="actions">
-        <button id="btn-svg" class="icon-btn" title="SVG として保存"><span data-icon="dl"></span><span>SVG</span></button>
+        <button id="btn-svg" class="icon-btn" title="SVG として保存(小余白・表示サイズ調整)"><span data-icon="dl"></span><span>SVG</span></button>
+        <button id="btn-png" class="icon-btn" title="PNG として保存(8倍解像度・小余白)"><span data-icon="dl"></span><span>PNG</span></button>
+        <button id="btn-jpg" class="icon-btn" title="JPEG として保存(8倍解像度・小余白)"><span data-icon="dl"></span><span>JPEG</span></button>
         <button id="btn-pdf" class="icon-btn" title="PDF として保存(日本語フォント埋込)"><span data-icon="dl"></span><span>PDF</span></button>
         <button id="btn-refs-md" class="icon-btn" title="符号表 (Markdown)"><span data-icon="list"></span><span>符号MD</span></button>
         <button id="btn-refs-csv" class="icon-btn" title="符号表 (CSV)"><span data-icon="list"></span><span>符号CSV</span></button>
@@ -126,6 +134,7 @@
     <footer class="appfoot">
       <span class="foot-stat" id="foot-stat"></span>
       <span class="foot-spacer"></span>
+      <span class="foot-version" id="app-version"></span>
       <span class="foot-credit">© 2026 しばやま</span>
     </footer>
   </div>

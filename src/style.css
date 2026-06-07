@@ -89,6 +89,35 @@ header {
 .lang button:hover:not(.active) { background: var(--bg-soft); color: var(--fg); }
 .lang button.active { background: var(--accent); color: white; }
 
+.zoom-control {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-pane);
+  box-shadow: var(--shadow-sm);
+}
+.zoom-control button {
+  height: 27px;
+  min-width: 31px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  transition: background 80ms ease, color 80ms ease;
+}
+.zoom-control button:last-child { border-right: 0; }
+.zoom-control button:hover { background: var(--bg-soft); color: var(--accent); }
+.zoom-control .btn-icon { width: 14px; height: 14px; display: inline-flex; }
+#zoom-label { min-width: 36px; text-align: center; font-family: var(--mono); color: var(--fg-soft); }
+
 .icon-btn {
   background: var(--bg-pane);
   border: 1px solid var(--line);
@@ -332,10 +361,15 @@ aside { border-right: 0; }
   padding: 16px;
   overflow: auto;
 }
+.preview-pane #preview[data-zoom-scroll="true"] {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
 .preview-pane #preview svg {
   background: white;
   box-shadow: var(--shadow-md);
   border-radius: 4px;
+  flex: 0 0 auto;
   max-width: 100%;
   max-height: 100%;
 }
@@ -437,6 +471,7 @@ aside { border-right: 0; }
 .foot-stat .kind { color: var(--accent); font-weight: 600; padding-right: 6px; }
 .foot-spacer { flex: 1 1 auto; }
 .foot-credit { letter-spacing: 0.02em; }
+.foot-version { font-family: var(--mono); color: var(--muted-2); }
 
 @media (max-width: 1100px) {
   header { gap: 8px; padding: 8px 12px; }

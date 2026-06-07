@@ -134,7 +134,7 @@ export function stripComment(line: string): string {
 export function splitBilingual(text: string): Bilingual {
   const s = text.trim();
   if (!s) return {};
-  const slashIdx = findOutsideQuotes(s, '/');
+  const slashIdx = findBilingualSeparator(s);
   if (slashIdx === -1) {
     return { ja: stripQuotes(s) };
   }
@@ -144,13 +144,17 @@ export function splitBilingual(text: string): Bilingual {
   };
 }
 
-function findOutsideQuotes(s: string, ch: string): number {
+function findBilingualSeparator(s: string): number {
   let inQuote = false;
   for (let i = 0; i < s.length; i++) {
     if (s[i] === '"') { inQuote = !inQuote; continue; }
-    if (!inQuote && s[i] === ch) return i;
+    if (!inQuote && s[i] === '/' && isSpace(s[i - 1]) && isSpace(s[i + 1])) return i;
   }
   return -1;
+}
+
+function isSpace(ch: string | undefined): boolean {
+  return ch === ' ' || ch === '\t';
 }
 
 function stripQuotes(s: string): string {

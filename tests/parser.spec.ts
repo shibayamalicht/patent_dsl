@@ -125,7 +125,20 @@ S110 -> S120
   it('splits bilingual outside quotes', () => {
     expect(splitBilingual('制御 / control')).toEqual({ ja: '制御', en: 'control' });
     expect(splitBilingual('"a/b" / "c"')).toEqual({ ja: 'a/b', en: 'c' });
+    expect(splitBilingual('A/D変換部 / A/D converter')).toEqual({
+      ja: 'A/D変換部',
+      en: 'A/D converter',
+    });
     expect(splitBilingual('one only')).toEqual({ ja: 'one only' });
+  });
+
+  it('keeps slash terms inside unquoted Japanese labels', () => {
+    const d = parse('30 = A/D変換部 / A/D converter');
+
+    expect(d.nodes.get('30')!.label).toEqual({
+      ja: 'A/D変換部',
+      en: 'A/D converter',
+    });
   });
 
   it('auto-creates implicit nodes from connections', () => {

@@ -41,6 +41,12 @@ export const ICON_NEW =
 export const ICON_TRASH =
   `<svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4h10M6 4V2.5h4V4M4.5 4l.5 9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1l.5-9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><line x1="6.5" y1="7" x2="6.5" y2="12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="9.5" y1="7" x2="9.5" y2="12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
 
+export const ICON_ZOOM_IN =
+  `<svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="7" y1="4.8" x2="7" y2="9.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="4.8" y1="7" x2="9.2" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+
+export const ICON_ZOOM_OUT =
+  `<svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="4.8" y1="7" x2="9.2" y2="7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
+
 export const ICON_SHAPE: Record<string, string> = {
   normal: `<svg viewBox="0 0 28 16" class="shape-icon" aria-hidden="true"><rect x="2" y="3" width="24" height="10" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`,
   cond:   `<svg viewBox="0 0 28 16" class="shape-icon" aria-hidden="true"><polygon points="14,2 25,8 14,14 3,8" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`,

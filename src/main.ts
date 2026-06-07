@@ -2,16 +2,17 @@ import { parse } from './parser';
 import { layout } from './layout';
 import { render } from './render';
 import { refsToCsv, refsToMarkdown } from './refs';
-import { downloadText, exportSvgAsPdf, exportSvgFile } from './pdf';
+import { downloadText, exportSvgAsPdf, exportSvgAsRaster, exportSvgFile } from './pdf';
 import { SAMPLE_ORDER, SAMPLES, type SampleId } from './samples';
 import { HELP_HTML } from './help';
 import { buildNodeDefinitionLine, quoteIfNeeded, type GuiNodeShape } from './gui-format';
 import {
   BRAND_MARK, ICON_DOWNLOAD, ICON_HELP, ICON_LIST, ICON_NEW, ICON_TRASH,
-  ICON_MODE, ICON_OP, ICON_PATTERN, ICON_SHAPE, OP_LABEL,
+  ICON_MODE, ICON_OP, ICON_PATTERN, ICON_SHAPE, ICON_ZOOM_IN, ICON_ZOOM_OUT, OP_LABEL,
 } from './icons';
 import { PATTERN_LABEL, PATTERN_SOURCE, type PatternId } from './patterns';
 import type { Lang } from './types';
+import pkg from '../package.json';
 
 const SAMPLE = SAMPLES.block.source;
 const STORAGE_KEY = 'patentdsl:source';
@@ -20,6 +21,10 @@ const MODE_KEY = 'patentdsl:mode';
 const INPUT_KEY = 'patentdsl:input';
 const OP_KEY = 'patentdsl:edge-op';
 const SHAPE_KEY = 'patentdsl:node-shape';
+const ZOOM_KEY = 'patentdsl:preview-zoom';
+const ZOOM_MIN = 0.4;
+const ZOOM_MAX = 3;
+const ZOOM_STEP = 0.1;
 
 type ViewMode = 'edit' | 'split' | 'preview';
 type InputMode = 'cli' | 'gui';
@@ -37,6 +42,8 @@ const preview = document.getElementById('preview') as HTMLDivElement;
 const refsPanel = document.getElementById('refs') as HTMLDivElement;
 const diagBar = document.getElementById('diagnostics') as HTMLDivElement;
 const footStat = document.getElementById('foot-stat') as HTMLElement;
+const zoomLabel = document.getElementById('zoom-label') as HTMLSpanElement;
+const appVersion = document.getElementById('app-version') as HTMLElement;
 
 const KIND_LABEL: Record<string, string> = {
   block: 'ブロック図', flow: 'フローチャート',
@@ -48,11 +55,13 @@ let viewMode: ViewMode = (localStorage.getItem(MODE_KEY) as ViewMode) ?? 'split'
 let inputMode: InputMode = (localStorage.getItem(INPUT_KEY) as InputMode) ?? 'cli';
 let currentOp: string = localStorage.getItem(OP_KEY) ?? '-';
 let currentShape: NodeShape = (localStorage.getItem(SHAPE_KEY) as NodeShape) ?? 'normal';
+let previewZoom = readStoredZoom();
 
 function bootstrap() {
   editor.value = localStorage.getItem(STORAGE_KEY) ?? SAMPLE;
   app.dataset.mode = viewMode;
   app.dataset.input = inputMode;
+  appVersion.textContent = `v${pkg.version}`;
 
   insertIcons();
 
@@ -78,6 +87,7 @@ function bootstrap() {
       for (const x of modeSwitch.querySelectorAll<HTMLButtonElement>('button')) {
         x.classList.toggle('active', x.dataset.mode === viewMode);
       }
+      requestAnimationFrame(applyPreviewZoom);
     });
   }
 
@@ -98,6 +108,18 @@ function bootstrap() {
     const svg = preview.querySelector('svg');
     if (svg) exportSvgFile(svg as SVGSVGElement);
   });
+  document.getElementById('btn-png')!.addEventListener('click', async () => {
+    const svg = preview.querySelector('svg');
+    if (!svg) return;
+    try { await exportSvgAsRaster(svg as SVGSVGElement, 'png'); }
+    catch (e: any) { alert('PNG出力エラー: ' + (e?.message ?? String(e))); }
+  });
+  document.getElementById('btn-jpg')!.addEventListener('click', async () => {
+    const svg = preview.querySelector('svg');
+    if (!svg) return;
+    try { await exportSvgAsRaster(svg as SVGSVGElement, 'jpeg'); }
+    catch (e: any) { alert('JPEG出力エラー: ' + (e?.message ?? String(e))); }
+  });
   document.getElementById('btn-pdf')!.addEventListener('click', async () => {
     const svg = preview.querySelector('svg');
     if (!svg) return;
@@ -112,6 +134,11 @@ function bootstrap() {
     const doc = parse(editor.value);
     downloadText(refsToCsv(doc), 'reference-signs.csv', 'text/csv');
   });
+
+  document.getElementById('btn-zoom-out')!.addEventListener('click', () => setPreviewZoom(previewZoom - ZOOM_STEP));
+  document.getElementById('btn-zoom-in')!.addEventListener('click', () => setPreviewZoom(previewZoom + ZOOM_STEP));
+  document.getElementById('btn-zoom-reset')!.addEventListener('click', () => setPreviewZoom(1));
+  window.addEventListener('resize', applyPreviewZoom);
 
   document.getElementById('btn-new')!.addEventListener('click', () => {
     if (editor.value.trim() && !confirm('現在のソースを破棄してサンプルに戻します。よろしいですか?')) return;
@@ -190,6 +217,8 @@ function insertIcons() {
   for (const el of document.querySelectorAll<HTMLElement>('[data-icon="list"]')) el.innerHTML = ICON_LIST;
   for (const el of document.querySelectorAll<HTMLElement>('[data-icon="new"]')) el.innerHTML = ICON_NEW;
   for (const el of document.querySelectorAll<HTMLElement>('[data-icon="trash"]')) el.innerHTML = ICON_TRASH;
+  for (const el of document.querySelectorAll<HTMLElement>('[data-icon="zoom-in"]')) el.innerHTML = ICON_ZOOM_IN;
+  for (const el of document.querySelectorAll<HTMLElement>('[data-icon="zoom-out"]')) el.innerHTML = ICON_ZOOM_OUT;
 
   for (const el of document.querySelectorAll<HTMLElement>('[data-icon]')) {
     el.classList.add('btn-icon');
@@ -367,6 +396,7 @@ function refresh() {
     try {
       const laid = layout(doc);
       preview.appendChild(render(laid, { lang }));
+      applyPreviewZoom();
     } catch (e: any) {
       preview.innerHTML = `<div class="err">レイアウトエラー: ${escapeHtml(e?.message ?? String(e))}</div>`;
     }
@@ -396,6 +426,56 @@ function refresh() {
     table.appendChild(tbody);
     refsPanel.appendChild(table);
   }
+}
+
+function readStoredZoom(): number {
+  const raw = Number(localStorage.getItem(ZOOM_KEY));
+  if (!Number.isFinite(raw)) return 1;
+  return clampZoom(raw);
+}
+
+function setPreviewZoom(next: number): void {
+  previewZoom = clampZoom(next);
+  localStorage.setItem(ZOOM_KEY, previewZoom.toFixed(2));
+  applyPreviewZoom();
+}
+
+function clampZoom(value: number): number {
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(value * 10) / 10));
+}
+
+function applyPreviewZoom(): void {
+  if (zoomLabel) zoomLabel.textContent = `${Math.round(previewZoom * 100)}%`;
+  const svg = preview.querySelector('svg');
+  if (!svg) {
+    preview.dataset.zoomScroll = 'false';
+    return;
+  }
+  const vb = svg.getAttribute('viewBox')?.split(/\s+/).map(Number);
+  const width = vb && vb.length === 4 && Number.isFinite(vb[2]) ? vb[2] : svg.clientWidth;
+  const height = vb && vb.length === 4 && Number.isFinite(vb[3]) ? vb[3] : svg.clientHeight;
+  const available = previewAvailableSize();
+  const fitScale = Math.min(available.width / width, available.height / height);
+  const cssWidth = Math.max(1, width * fitScale * previewZoom);
+  const cssHeight = Math.max(1, height * fitScale * previewZoom);
+  svg.style.width = `${cssWidth}px`;
+  svg.style.height = `${cssHeight}px`;
+  svg.style.maxWidth = 'none';
+  svg.style.maxHeight = 'none';
+  preview.dataset.zoomScroll = (
+    cssWidth > available.width + 0.5 || cssHeight > available.height + 0.5
+  ) ? 'true' : 'false';
+}
+
+function previewAvailableSize(): { width: number; height: number } {
+  const style = getComputedStyle(preview);
+  const px = (value: string): number => Number.parseFloat(value) || 0;
+  const width = preview.clientWidth - px(style.paddingLeft) - px(style.paddingRight);
+  const height = preview.clientHeight - px(style.paddingTop) - px(style.paddingBottom);
+  return {
+    width: Math.max(1, width),
+    height: Math.max(1, height),
+  };
 }
 
 function escapeHtml(s: string): string {

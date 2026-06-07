@@ -20,7 +20,7 @@ export const HELP_HTML = `
   <a href="#h-shape-howto">菱形の作り方</a>
   <a href="#h-examples">完全な例</a>
   <a href="#h-advanced">応用例</a>
-  <a href="#h-output">出力(SVG/PDF/符号表)</a>
+  <a href="#h-output">出力(SVG/PNG/JPEG/PDF/符号表)</a>
   <a href="#h-faq">FAQ</a>
   <a href="#h-tips">Tips・落とし穴</a>
   <a href="#h-shortcuts">操作・モード</a>
@@ -45,7 +45,7 @@ export const HELP_HTML = `
     <li>左ペインに符号と関係を書く ─ <code>10 = ラベル</code>(定義)、<code>10 : 11 12</code>(包含)、<code>11 -&gt; 12</code>(接続)</li>
     <li>中央に図がリアルタイム描画される</li>
     <li>右ペインに符号表が自動生成される</li>
-    <li>ヘッダ右の SVG/PDF/符号MD ボタンで出力</li>
+    <li>ヘッダ右の SVG/PNG/JPEG/PDF/符号MD ボタンで出力</li>
     <li>はじめてなら、左上「サンプル…」から雛形を読込むのが早い</li>
   </ol>
 </section>
@@ -73,7 +73,7 @@ export const HELP_HTML = `
 12 = メモリ / memory</code></pre>
   <ul>
     <li><code>=</code> の前後の空白は無視されます。</li>
-    <li>ラベル中の <code>/</code> は <b>日本語と英語の区切り</b>。両方書く場合のみ使用。</li>
+    <li>空白付きの <code> / </code> は <b>日本語と英語の区切り</b>。<code>A/D</code> や <code>I/O</code> のような語中の <code>/</code> はラベル文字として扱います。</li>
     <li>片方だけのラベル(<code>11 = CPU</code>)は両言語モードで同じ表示に。</li>
     <li>定義しないで接続だけに書いた符号は <b>暗黙ノード</b> として自動生成され、符号表に薄色で表示されます。</li>
     <li><b>同じ符号の再定義</b>: 後から書いた方で上書きされ、警告が出ます。</li>
@@ -106,10 +106,12 @@ export const HELP_HTML = `
   <ul>
     <li>子が 1〜2 個 → 縦1列に並ぶ</li>
     <li>子が 3 個以上で、子同士が直列の処理チェーンを作る場合 → 縦1列に並ぶ</li>
-    <li>子が 3 個以上で、分岐/並列/スター状の接続の場合 → 2列グリッド寄りに並ぶ</li>
+    <li>子が 3 個以上で、分岐/並列/スター状の接続の場合 → 2〜4列グリッド寄りに並ぶ</li>
     <li>同じ親コンテナ内の接続は親の外へ逃がさず、内側の余白通路を優先</li>
     <li>外部ブロックは、接続先の内部ブロックに近い高さへ自動整列</li>
     <li>外部接続は他のブロックを横切らず、接続先の自然な辺(上下左右)へ入る経路を優先</li>
+    <li>既存線との深い重なりを避け、必要以上に遠いレーンへの迂回を抑える</li>
+    <li>接続ラベルは箱、外枠、タイトル領域、他の接続ラベルとの重なりを避け、長い空き区間や線から少し離した位置を優先</li>
     <li>包含が1つでもあれば、図は <b>ブロック図</b> として描画</li>
   </ul>
 </section>
@@ -144,9 +146,10 @@ export const HELP_HTML = `
 
 <section id="h-label">
   <h3>ラベルと多言語</h3>
-  <p>定義と接続のラベルは、<code>/</code> で日英を区切ります。</p>
+  <p>定義と接続のラベルは、空白付きの <code> / </code> で日英を区切ります。</p>
 <pre><code>10 = 制御装置 / control device         # 定義(日英)
 11 = CPU                              # 英のみ(両モードで CPU と表示)
+12 = A/D変換部 / A/D converter        # 語中の / はラベル文字
 13 -> 20 : 信号 / signal               # 接続ラベルも同様</code></pre>
   <p>UI右上の <code>日</code>/<code>英</code>/<code>日/英</code> ボタンで表示モードを切替。<b>日/英</b> モードでは1ノード/エッジに両言語が2段で表示されます(PCT国際出願のレビュー用)。</p>
   <p>片言語のみ定義した場合、もう一方の言語モードでもその文字をそのまま表示します。</p>
@@ -163,12 +166,12 @@ export const HELP_HTML = `
 
 <section id="h-quote">
   <h3>クォート / エスケープ</h3>
-  <p>ラベルに <code>/</code> <code>:</code> <code>=</code> <code>#</code> などの記号を含めたい場合は <code>"..."</code> で囲みます。</p>
-<pre><code>13 = "I/O インターフェース" / "I/O interface"    # / を含むラベル
+  <p>ラベルに <code> / </code> <code>:</code> <code>=</code> <code>#</code> などの区切り記号を含めたい場合は <code>"..."</code> で囲みます。語中の <code>/</code> はそのまま書けます。</p>
+<pre><code>13 = A/D変換部 / A/D converter                  # 語中の / はそのまま
 14 = "比率 1:2" / "ratio 1:2"                  # : を含むラベル
 15 = "型番 #ABC" / "Model #ABC"                # # を含むラベル
 16 = "計算: y = ax + b" / "y = ax + b"          # = を含むラベル</code></pre>
-  <p>クォート外の <code>/</code> は日英区切り、<code>:</code> はエッジラベル区切り、<code>#</code> はコメント開始として解釈されます。</p>
+  <p>クォート外の空白付き <code> / </code> は日英区切り、<code>:</code> はエッジラベル区切り、<code>#</code> はコメント開始として解釈されます。</p>
 </section>
 
 <section id="h-infer-kind">
@@ -411,17 +414,19 @@ S120 -> S130</code></pre>
 </section>
 
 <section id="h-output">
-  <h3>出力(SVG/PDF/符号表)</h3>
+  <h3>出力(SVG/PNG/JPEG/PDF/符号表)</h3>
   <table class="help-tbl">
     <thead><tr><th>形式</th><th>内容</th><th>用途</th></tr></thead>
     <tbody>
-      <tr><td>SVG</td><td>ベクタ画像</td><td>Word/LaTeX/Markdownに貼付、Web表示</td></tr>
+      <tr><td>SVG</td><td>小余白で切り出し、単体表示しやすいサイズを指定したベクタ画像</td><td>Word/LaTeX/Markdownに貼付、Web表示</td></tr>
+      <tr><td>PNG</td><td>8倍解像度、小余白、白背景</td><td>Word/PowerPoint/画像提出</td></tr>
+      <tr><td>JPEG</td><td>8倍解像度、小余白、白背景</td><td>画像提出、プレビュー共有</td></tr>
       <tr><td>PDF</td><td>IPAexゴシック埋込、A4サイズ</td><td>特許出願ファイル、印刷</td></tr>
       <tr><td>符号MD</td><td>Markdown表(符号/日/英)</td><td>明細書【符号の説明】コピペ</td></tr>
       <tr><td>符号CSV</td><td>CSV(id,ja,en)</td><td>翻訳作業、表計算ソフト連携</td></tr>
     </tbody>
   </table>
-  <p>表示言語(日/英/日英)はSVG/PDFにも反映されます。</p>
+  <p>SVG/PNG/JPEGは実描画範囲に小さな余白を付けて切り出し、プレビューの余白や拡大率を出力に含めません。SVGはブラウザで直接開いたときに小さくなりすぎない表示サイズを指定します。表示言語(日/英/日英)はSVG/PNG/JPEG/PDFにも反映されます。</p>
 </section>
 
 <section id="h-faq">
@@ -463,7 +468,7 @@ S120 -> S130</code></pre>
     <li><b>図種を変えたい</b>: <code>:</code> を消す/追加、ラベルに <code>?</code> を入れる、<code>*</code> を使う、など <b>目印を変えるだけ</b>。</li>
     <li><b>暗黙ノード</b>: 定義なしに <code>11 -&gt; 99</code> と書くと、<code>99</code> は符号表に「(暗黙)」として現れる。本当に存在するなら <code>99 = …</code> を追加。</li>
     <li><b>未使用の符号</b>: 定義しただけの符号も符号表には出る。一時的なメモなら <code>#</code> でコメントアウト。</li>
-    <li><b>クォート</b>: ラベルに <code>/</code> <code>:</code> <code>=</code> <code>#</code> を含めたい時は必ず <code>"..."</code> で囲む。</li>
+    <li><b>クォート</b>: ラベルに <code> / </code> <code>:</code> <code>=</code> <code>#</code> を含めたい時は <code>"..."</code> で囲む。語中の <code>/</code> はそのまま書ける。</li>
     <li><b>PDF品質</b>: 出力PDFはA4縦/横(内容次第)で日本語フォント埋込済み。特許出願にそのまま使える。</li>
     <li><b>LocalStorage</b>: 編集中の内容は自動保存。クリアしたい場合は「新規」ボタン。</li>
     <li><b>シーケンス図の順序</b>: 接続を書いた順に上から下に積まれる。並べ替えたい時はソース内の行を入れ替える。</li>
@@ -497,8 +502,8 @@ S120 -> S130</code></pre>
   <ul>
     <li><b>サンプル…</b>: 図種別・用途別の雛形をワンクリックで読込</li>
     <li><b>新規</b>: 現在のソースを破棄してサンプルに戻す(確認ダイアログあり)</li>
-    <li><b>日/英/日英</b>: 表示言語の切替(SVG/PDF出力も同じ)</li>
-    <li><b>SVG/PDF</b>: ダウンロード。PDFは日本語フォント埋込</li>
+    <li><b>日/英/日英</b>: 表示言語の切替(SVG/PNG/JPEG/PDF出力も同じ)</li>
+    <li><b>SVG/PNG/JPEG/PDF</b>: ダウンロード。SVG/PNG/JPEGは小余白で切り出し、PNG/JPEGは高解像度、PDFは日本語フォント埋込</li>
     <li><b>符号MD/CSV</b>: 符号表のダウンロード</li>
   </ul>
 </section>

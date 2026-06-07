@@ -12,6 +12,9 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
   },
+  test: {
+    dir: 'tests',
+  },
   build: {
     target: 'es2022',
     sourcemap: false,
