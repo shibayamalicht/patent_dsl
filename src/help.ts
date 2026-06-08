@@ -20,7 +20,7 @@ export const HELP_HTML = `
   <a href="#h-shape-howto">菱形の作り方</a>
   <a href="#h-examples">完全な例</a>
   <a href="#h-advanced">応用例</a>
-  <a href="#h-output">出力(SVG/PNG/JPEG/PDF/符号表)</a>
+  <a href="#h-output">出力(SVG/PNG/JPEG/PDF/PPTX/符号表)</a>
   <a href="#h-faq">FAQ</a>
   <a href="#h-tips">Tips・落とし穴</a>
   <a href="#h-shortcuts">操作・モード</a>
@@ -45,7 +45,7 @@ export const HELP_HTML = `
     <li>左ペインに符号と関係を書く ─ <code>10 = ラベル</code>(定義)、<code>10 : 11 12</code>(包含)、<code>11 -&gt; 12</code>(接続)</li>
     <li>中央に図がリアルタイム描画される</li>
     <li>右ペインに符号表が自動生成される</li>
-    <li>ヘッダ右の SVG/PNG/JPEG/PDF/符号MD ボタンで出力</li>
+    <li>ヘッダ右の SVG/PNG/JPEG/PDF/PPTX/符号MD ボタンで出力</li>
     <li>はじめてなら、左上「サンプル…」から雛形を読込むのが早い</li>
   </ol>
 </section>
@@ -414,7 +414,7 @@ S120 -> S130</code></pre>
 </section>
 
 <section id="h-output">
-  <h3>出力(SVG/PNG/JPEG/PDF/符号表)</h3>
+  <h3>出力(SVG/PNG/JPEG/PDF/PPTX/符号表)</h3>
   <table class="help-tbl">
     <thead><tr><th>形式</th><th>内容</th><th>用途</th></tr></thead>
     <tbody>
@@ -422,11 +422,14 @@ S120 -> S130</code></pre>
       <tr><td>PNG</td><td>8倍解像度、小余白、白背景</td><td>Word/PowerPoint/画像提出</td></tr>
       <tr><td>JPEG</td><td>8倍解像度、小余白、白背景</td><td>画像提出、プレビュー共有</td></tr>
       <tr><td>PDF</td><td>IPAexゴシック埋込、A4サイズ</td><td>特許出願ファイル、印刷</td></tr>
+      <tr><td>PPTX</td><td>高解像度PNGを16:9スライドへ配置</td><td>PowerPoint資料、レビュー共有</td></tr>
+      <tr><td>PPTX編集</td><td>図面をPowerPointの図形、線、文字へ変換</td><td>PowerPoint上での文言・配置調整</td></tr>
       <tr><td>符号MD</td><td>Markdown表(符号/日/英)</td><td>明細書【符号の説明】コピペ</td></tr>
       <tr><td>符号CSV</td><td>CSV(id,ja,en)</td><td>翻訳作業、表計算ソフト連携</td></tr>
     </tbody>
   </table>
-  <p>SVG/PNG/JPEGは実描画範囲に小さな余白を付けて切り出し、プレビューの余白や拡大率を出力に含めません。SVGはブラウザで直接開いたときに小さくなりすぎない表示サイズを指定します。表示言語(日/英/日英)はSVG/PNG/JPEG/PDFにも反映されます。</p>
+  <p>SVG/PNG/JPEG/PPTXは実描画範囲に小さな余白を付けて切り出し、プレビューの余白や拡大率を出力に含めません。SVGはブラウザで直接開いたときに小さくなりすぎない表示サイズを指定します。表示言語(日/英/日英)はSVG/PNG/JPEG/PDF/PPTX/PPTX編集にも反映されます。</p>
+  <p>通常のPPTXは見た目の再現性を優先し、図面を1枚のスライドに画像として配置します。PPTX編集は編集可能性を優先し、矩形、線、矢印、文字をPowerPoint部品へ変換します。</p>
 </section>
 
 <section id="h-faq">
@@ -502,8 +505,8 @@ S120 -> S130</code></pre>
   <ul>
     <li><b>サンプル…</b>: 図種別・用途別の雛形をワンクリックで読込</li>
     <li><b>新規</b>: 現在のソースを破棄してサンプルに戻す(確認ダイアログあり)</li>
-    <li><b>日/英/日英</b>: 表示言語の切替(SVG/PNG/JPEG/PDF出力も同じ)</li>
-    <li><b>SVG/PNG/JPEG/PDF</b>: ダウンロード。SVG/PNG/JPEGは小余白で切り出し、PNG/JPEGは高解像度、PDFは日本語フォント埋込</li>
+    <li><b>日/英/日英</b>: 表示言語の切替(SVG/PNG/JPEG/PDF/PPTX出力も同じ)</li>
+    <li><b>SVG/PNG/JPEG/PDF/PPTX</b>: ダウンロード。SVG/PNG/JPEG/PPTXは小余白で切り出し、PNG/JPEG/PPTXは高解像度、PDFは日本語フォント埋込、PPTX編集はPowerPoint図形へ変換</li>
     <li><b>符号MD/CSV</b>: 符号表のダウンロード</li>
   </ul>
 </section>
@@ -514,6 +517,7 @@ S120 -> S130</code></pre>
   <ul>
     <li>同梱フォント: <a href="https://moji.or.jp/ipafont/" target="_blank">IPAexゴシック</a>(IPAフォントライセンス v1.0)</li>
     <li>PDF生成: <code>jsPDF</code>, <code>svg2pdf.js</code>(MIT)</li>
+    <li>PPTX生成: Open XML パッケージ</li>
   </ul>
   <p class="copyright">© 2026 しばやま</p>
 </section>

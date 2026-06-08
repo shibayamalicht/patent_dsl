@@ -2,7 +2,14 @@ import { parse } from './parser';
 import { layout } from './layout';
 import { render } from './render';
 import { refsToCsv, refsToMarkdown } from './refs';
-import { downloadText, exportSvgAsPdf, exportSvgAsRaster, exportSvgFile } from './pdf';
+import {
+  downloadText,
+  exportSvgAsEditablePptx,
+  exportSvgAsPdf,
+  exportSvgAsPptx,
+  exportSvgAsRaster,
+  exportSvgFile,
+} from './pdf';
 import { SAMPLE_ORDER, SAMPLES, type SampleId } from './samples';
 import { HELP_HTML } from './help';
 import { buildNodeDefinitionLine, quoteIfNeeded, type GuiNodeShape } from './gui-format';
@@ -125,6 +132,18 @@ function bootstrap() {
     if (!svg) return;
     try { await exportSvgAsPdf(svg as SVGSVGElement); }
     catch (e: any) { alert('PDF出力エラー: ' + (e?.message ?? String(e))); }
+  });
+  document.getElementById('btn-pptx')!.addEventListener('click', async () => {
+    const svg = preview.querySelector('svg');
+    if (!svg) return;
+    try { await exportSvgAsPptx(svg as SVGSVGElement); }
+    catch (e: any) { alert('PPTX出力エラー: ' + (e?.message ?? String(e))); }
+  });
+  document.getElementById('btn-pptx-edit')!.addEventListener('click', () => {
+    const svg = preview.querySelector('svg');
+    if (!svg) return;
+    try { exportSvgAsEditablePptx(svg as SVGSVGElement); }
+    catch (e: any) { alert('PPTX編集版出力エラー: ' + (e?.message ?? String(e))); }
   });
   document.getElementById('btn-refs-md')!.addEventListener('click', () => {
     const doc = parse(editor.value);

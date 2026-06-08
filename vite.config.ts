@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [viteSingleFile()],
   esbuild: {
     legalComments: 'none',
-    drop: ['console'],
+    drop: ['console', 'debugger'],
   },
   server: {
     port: 5173,

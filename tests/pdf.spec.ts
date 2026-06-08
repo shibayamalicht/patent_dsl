@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildEditablePptxPackage,
+  buildPptxPackage,
+  fitRectIntoSlide,
   fitRectIntoPage,
   getSvgContentBox,
   parseSvgViewBox,
@@ -97,6 +100,48 @@ describe('PDF export sizing', () => {
       scale: 1,
     });
   });
+
+  it('fits exported figures into a widescreen PPTX slide with margins', () => {
+    const fit = fitRectIntoSlide(1600, 900);
+
+    expect(fit.x).toBeGreaterThanOrEqual(457200);
+    expect(fit.y).toBeGreaterThanOrEqual(457200);
+    expect(fit.x + fit.width).toBeLessThanOrEqual(12192000 - 457200);
+    expect(fit.y + fit.height).toBeLessThanOrEqual(6858000 - 457200);
+    expect(Math.abs(fit.width / fit.height - 16 / 9)).toBeLessThan(0.001);
+  });
+
+  it('creates a PPTX package with the rendered image on a slide', () => {
+    const pptx = buildPptxPackage(new Uint8Array([137, 80, 78, 71]), 1600, 900);
+    const text = bytesAsText(pptx);
+
+    expect(pptx[0]).toBe(0x50);
+    expect(pptx[1]).toBe(0x4b);
+    expect(text).toContain('[Content_Types].xml');
+    expect(text).toContain('ppt/presentation.xml');
+    expect(text).toContain('ppt/slides/slide1.xml');
+    expect(text).toContain('ppt/media/image1.png');
+    expect(text).toContain('image/png');
+  });
+
+  it('creates an editable PPTX package from SVG primitives', () => {
+    const svg = fakeSvg({ viewBox: '0 0 100 60' }, [
+      fakeElement('rect', { x: '10', y: '10', width: '30', height: '12', fill: 'white', stroke: '#000', 'stroke-width': '0.4' }),
+      fakeElement('path', { d: 'M 40 16 L 70 16', fill: 'none', stroke: '#000', 'stroke-width': '0.4' }),
+      fakeElement('polygon', { points: '70,16 66,14 66,18', fill: '#000', stroke: '#000', 'stroke-width': '0' }),
+      fakeElement('text', { x: '25', y: '17', 'font-size': '2.8', fill: '#000', 'text-anchor': 'middle' }, '10'),
+    ]);
+    const pptx = buildEditablePptxPackage(svg);
+    const text = bytesAsText(pptx);
+
+    expect(pptx[0]).toBe(0x50);
+    expect(pptx[1]).toBe(0x4b);
+    expect(text).toContain('ppt/slides/slide1.xml');
+    expect(text).toContain('<p:sp>');
+    expect(text).toContain('<p:cxnSp>');
+    expect(text).toContain('<a:t>10</a:t>');
+    expect(text).toContain('<a:custGeom>');
+  });
 });
 
 function fakeSvg(attrs: Record<string, string>, elements: unknown[] = []): SVGSVGElement {
@@ -116,4 +161,18 @@ function fakeBBox(box: { x: number; y: number; width: number; height: number }):
       return box;
     },
   } as unknown as SVGGraphicsElement;
+}
+
+function fakeElement(tagName: string, attrs: Record<string, string>, textContent = ''): Element {
+  return {
+    tagName,
+    textContent,
+    getAttribute(name: string) {
+      return attrs[name] ?? null;
+    },
+  } as unknown as Element;
+}
+
+function bytesAsText(bytes: Uint8Array): string {
+  return new TextDecoder().decode(bytes);
 }

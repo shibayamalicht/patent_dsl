@@ -1,7 +1,7 @@
 {
   "name": "patentdsl",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "Patent diagram DSL single-HTML tool",
   "scripts": {

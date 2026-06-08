@@ -68,6 +68,8 @@ const THICK_ARROW_TERMINAL_CLEARANCE = 5.4;
 const VERTICAL_PORT_RATIO = 0.25;
 const PORT_STUB = 6;
 const MAX_ROUTE_LANES = 18;
+const FLOW_BACK_LANE_GAP = 18;
+const FLOW_BACK_LANE_STEP = 8;
 const EPS = 0.001;
 
 export function layout(doc: Doc): LaidOut {
@@ -283,6 +285,19 @@ function layoutFlow(doc: Doc): LaidOut {
     }
   }
 
+  const edges = makeFlowEdges(doc.edges, positions);
+  const minContentX = Math.min(
+    ...[...positions.values()].map(b => b.x),
+    ...edges.flatMap(edge => edge.points.map(([x]) => x)),
+  );
+  if (minContentX < MARGIN) {
+    const dx = MARGIN - minContentX;
+    for (const box of positions.values()) box.x += dx;
+    for (const edge of edges) {
+      edge.points = edge.points.map(([x, py]) => [x + dx, py]);
+    }
+  }
+
   const placed: LaidOutNode[] = [];
   for (const [id, b] of positions) {
     placed.push({
@@ -292,8 +307,12 @@ function layoutFlow(doc: Doc): LaidOut {
       isContainer: false,
     });
   }
-  const edges = makeEdges(doc.edges, positions);
-  return { nodes: placed, edges, width: maxX + MARGIN, height: y + MARGIN, kind: 'flow' };
+  const maxContentX = Math.max(
+    maxX,
+    ...[...positions.values()].map(b => b.x + b.w),
+    ...edges.flatMap(edge => edge.points.map(([x]) => x)),
+  );
+  return { nodes: placed, edges, width: maxContentX + MARGIN, height: y + MARGIN, kind: 'flow' };
 }
 
 function layoutState(doc: Doc): LaidOut {
@@ -466,6 +485,55 @@ function makeEdges(srcEdges: Edge[], positions: Map<string, Box>): LaidOutEdge[]
       op: e.op,
     };
   });
+}
+
+function makeFlowEdges(srcEdges: Edge[], positions: Map<string, Box>): LaidOutEdge[] {
+  const boxes = [...positions.entries()].map(([id, box]) => ({ id, ...box }));
+  let backIndex = 0;
+  return srcEdges.map(e => {
+    const a = positions.get(e.from);
+    const b = positions.get(e.to);
+    if (!a || !b) {
+      return { from: e.from, to: e.to, points: [], label: e.label, op: e.op };
+    }
+    const points = b.y + b.h < a.y - EPS
+      ? flowBackRoute(a, b, boxes.filter(box => box.id !== e.from && box.id !== e.to), backIndex++)
+      : orthogonalRoute(a, b);
+    return {
+      from: e.from, to: e.to,
+      points,
+      label: e.label,
+      op: e.op,
+    };
+  });
+}
+
+function flowBackRoute(
+  a: Box,
+  b: Box,
+  obstacles: Box[],
+  index: number,
+): [number, number][] {
+  const gap = FLOW_BACK_LANE_GAP + index * FLOW_BACK_LANE_STEP;
+  const leftLane = Math.min(a.x, b.x, ...obstacles.map(o => o.x)) - gap;
+  const rightLane = Math.max(a.x + a.w, b.x + b.w, ...obstacles.map(o => o.x + o.w)) + gap;
+  const ay = centerY(a);
+  const by = centerY(b);
+  const left = normalizeRoute([[a.x, ay], [leftLane, ay], [leftLane, by], [b.x, by]]);
+  const right = normalizeRoute([[a.x + a.w, ay], [rightLane, ay], [rightLane, by], [b.x + b.w, by]]);
+  const candidates = [left, right];
+  candidates.sort((p, q) => flowBackRouteScore(p, obstacles) - flowBackRouteScore(q, obstacles));
+  return candidates[0];
+}
+
+function flowBackRouteScore(points: [number, number][], obstacles: Box[]): number {
+  let score = 0;
+  if (routeIntersectsAnyInterior(points, obstacles, 0.8)) score += 1_000_000;
+  for (let i = 0; i < points.length - 1; i++) score += segmentLength(points[i], points[i + 1]);
+  for (const [x] of points) {
+    if (x < MARGIN) score += (MARGIN - x) * 12;
+  }
+  return score;
 }
 
 function hasLinearChildFlow(

@@ -169,6 +169,34 @@ const EV_FAST_CHARGING_SOURCE = `100 = 充電ステーション / charging stati
 500 .> 80 : 認証情報 / auth info
 500 .> 60 : 予約情報 / reservation`;
 
+const STATE_DECISION_FLOW_SOURCE = `S100 = 待機状態 / Idle state
+S110 = 検証処理 / Verify
+S120 = OK? / OK?
+S130 = 完了状態 / Done state
+S140 = 失敗状態 / Failed state
+S150 = 再試行 / Retry
+S100 -> S110 : 要求 / request
+S110 -> S120 : 判定 / check
+S120 -> S130 : OK
+S120 -> S140 : NG
+S140 -> S150
+S150 -> S100`;
+
+describe('flow layout', () => {
+  it('routes upward retry edges outside the central downward flow lane', () => {
+    const laid = layout(parse(STATE_DECISION_FLOW_SOURCE));
+    const back = requiredEdge(laid.edges, 'S150', 'S100');
+    const first = requiredEdge(laid.edges, 'S100', 'S110');
+    const second = requiredEdge(laid.edges, 'S110', 'S120');
+    const minNodeX = Math.min(...laid.nodes.map(n => n.x));
+    const maxNodeX = Math.max(...laid.nodes.map(n => n.x + n.w));
+
+    expect(back.points.some(([x]) => x < minNodeX - 1 || x > maxNodeX + 1)).toBe(true);
+    expect(routesHaveSharedLane(back.points, first.points, 2)).toBe(false);
+    expect(routesHaveSharedLane(back.points, second.points, 2)).toBe(false);
+  });
+});
+
 describe('block layout', () => {
   it('draws outer containers before nested containers', () => {
     const laid = layout(parse(SYSTEM_SOURCE));
